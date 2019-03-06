@@ -1,5 +1,6 @@
 #include "mach.h"
 #include "utest.h"
+#include "vtest.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,15 +15,18 @@ int main(int argc, char **argv)
 	}
 	int run_or_test = atoi(argv[1]);
 	int n = atoi(argv[2]);
-	if((run_or_test % 2) == 1)
+	if(run_or_test == 1)
 	{
 		double pi = compute_pi(n);
 		printf("Approximation of pi for n = %d: %f\n", n, pi);
 	}
-	else
+	else if((run_or_test) == 2)
 	{
 		print_utest();
 	}
-
+	else
+	{
+		save_vtest();
+	}
 	return 0;
 }
