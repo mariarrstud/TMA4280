@@ -1,28 +1,21 @@
 CC = gcc
 CFLAGS = -O2
 TARGET = mach
-LIB = libutils.a
-MAINSRC = main.c
 
-SRC = $(wildcard *.c)
+$(TARGET): main.o mach.o
+	$(CC) $(CFLAGS) -o $(TARGET) mach.o main.o -lm
 
-OBJ = $(patsubst %.c, %.o, $(SRC))
+utest: utest.o mach.o
+	$(CC) $(CFLAGS) -o utest utest.o mach.o -lm
 
-MAINOBJ = $(patsubst %.c, %.o, $(MAINSRC))
-LIBOBJ = $(patsubst $(MAINOBJ),,$(OBJ))
+vtest: vtest.o mach.o
+	$(CC) $(CFLAGS) -o vtest vtest.o mach.o -lm
 
-%.o:%.c
-	$(CC) $(CFLAGS) -c $<
+test: utest vtest
+	./utest ./vtest
 
-all: $(LIB) $(MAINOBJ)
-	$(CC) -o $(TARGET) $(MAINOBJ) $(LIB) -lm
-
-$(LIB): $(LIBOBJ)
-	@ar r $@ $(LIBOBJ)
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGET) $(LIB) $(OBJ)
-
-list_libobjs: $(LIB)
-	@echo "All the objects contained in the static library are printed below:\n"
-	nm $(LIB)
+	rm -f utest utest.o vtest vtest.o mach.o mach main.o

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-void save_vtest()
+int main(int argc, char** argv)
 {
 	FILE *vtest = fopen("vtest.txt", "w");
 	double error;
@@ -12,10 +12,11 @@ void save_vtest()
 	{
 		printf("Could not open file\n");
 	}
-	for(int k = 1; k <= 24; k = k + 1)
+	for(int k = 1; k <= 24; k++)
 	{
 		error = fabs(M_PI - compute_pi(pow(2, k)));
 		fprintf(vtest, "Error for n = %d: %f\n", (int)pow(2, k), error);
 	}
+	return 0;
 }
 

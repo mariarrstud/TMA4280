@@ -1,10 +1,10 @@
-#include "zeta.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-void print_utest()
+#include "zeta.h"
+
+int main(int argc, char** argv)
 {
 	double computed = compute_pi(3);
 	double expected = 2.857738;
@@ -16,4 +16,5 @@ void print_utest()
 	{
 		printf("Testing passed\n");
 	}
+	return 0;
 }

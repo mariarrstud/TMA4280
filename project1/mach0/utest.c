@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-void print_utest()
+int main(int argc, char** argv)
 {
 	double computed = compute_pi(3);
 	double expected = 3.141621;
@@ -16,4 +16,5 @@ void print_utest()
 	{
 		printf("Testing passed\n");
 	}
+	return 0;
 }
