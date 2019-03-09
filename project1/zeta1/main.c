@@ -37,12 +37,11 @@ int main(int argc, char **argv)
 	else
 	{
 		MPI_Recv(&vec, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
+		sum = sum_vec(vec, n);
+        	pi = sqrt(6 * sum);
+		printf("Process %d pi: %f\n", rank, pi);	
 	}	
 	
-	sum = sum_vec(vec, n);
-        pi = sqrt(6 * sum);
-	printf("Process %d pi: %f\n", rank, pi);	
-
 	MPI_Finalize();
 	return 0;
 }

@@ -42,13 +42,12 @@ int main(int argc, char **argv)
 	else
 	{
 		MPI_Recv(&vec_1, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
-		MPI_Recv(&vec_2, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
-	}	
-	sum_1 = sum_vec(vec_1, n);
-	sum_2 = sum_vec(vec_2, n);
-        pi = 4 * (4 * sum_1 - sum_2);
-	printf("Process %d pi: %f\n", rank, pi);	
-
+		MPI_Recv(&vec_2, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);	
+		sum_1 = sum_vec(vec_1, n);
+		sum_2 = sum_vec(vec_2, n);
+        	pi = 4 * (4 * sum_1 - sum_2);
+		printf("Process %d pi: %f\n", rank, pi);
+	}
 	MPI_Finalize();
 	return 0;
 }
