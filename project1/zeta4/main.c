@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include <omp.h>
 #include <math.h>
 
 int is_power_of_two(int number)
@@ -38,8 +39,10 @@ int main(int argc, char **argv)
 		MPI_Finalize();
 		return 2;
 	}
-
-	int n = atoi(argv[1]);
+	
+	int num_threads = atoi(argv[1]);
+	omp_set_num_threads(num_threads);
+	int n = atoi(argv[2]);
 	double time_start, sum, part_sum, pi, error;
 	double vec[n];
 	int tag = 100;
@@ -64,14 +67,14 @@ int main(int argc, char **argv)
 
 		pi = sqrt(6 * sum);
 		printf("Process %d pi: %f\n", rank, pi);
-		printf("Duration: %e (n = %d, np = %d)\n", MPI_Wtime() - time_start, n, size);
+		printf("Duration: %e (n = %d, np = %d, nt = %d)\n", MPI_Wtime() - time_start, n, size, num_threads);
 		error = fabs(M_PI - pi);
-		printf("Error: %f (n = %d, np = %d)\n", error, n, size);
+		printf("Error: %f (n = %d, np = %d, nt = %d)\n", error, n, size, num_threads);
 	}
 	else
 	{
 		MPI_Recv(&part_vec, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
-		part_sum = sum_vec(part_vec, n - (size - 2) * d);	
+		part_sum = sum_vec_using_openmp(part_vec, n - (size - 2) * d);	
 		MPI_Send(&part_sum, 1, MPI_DOUBLE, 0, tag + 1, MPI_COMM_WORLD);	
 	}	
 	

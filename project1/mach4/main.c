@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include <omp.h>
 #include <math.h>
 
 int is_power_of_two(int number)
@@ -39,7 +40,9 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
-	int n = atoi(argv[1]);
+	int num_threads = atoi(argv[1]);
+	omp_set_num_threads(num_threads);
+	int n = atoi(argv[2]);
 	double time_start, sum_1, sum_2, part_sum_1, part_sum_2, pi, error;
 	double x_1 = (1.0 / 5);
 	double x_2 = (1.0 / 239);
@@ -77,16 +80,16 @@ int main(int argc, char **argv)
 
 		pi = 4 * (4 * sum_1 - sum_2);
 		printf("Process %d pi: %f\n", rank, pi);
-		printf("Duration: %e (n = %d, np = %d)\n", MPI_Wtime() - time_start, n, size);
+		printf("Duration: %e (n = %d, np = %d, nt = %d)\n", MPI_Wtime() - time_start, n, size, num_threads);
 		error = fabs(M_PI - pi);
-		printf("Error: %f (n = %d, np = %d)\n", error, n, size);
+		printf("Error: %f (n = %d, np = %d, nt = %d)\n", error, n, size, num_threads);
 	}
 	else
 	{
 		MPI_Recv(&part_vec_1, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
 		MPI_Recv(&part_vec_2, n, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);	
-		part_sum_1 = sum_vec(part_vec_1, n - (size - 2) * d);	
-		part_sum_2 = sum_vec(part_vec_2, n - (size - 2) * d);	
+		part_sum_1 = sum_vec_using_openmp(part_vec_1, n - (size - 2) * d);	
+		part_sum_2 = sum_vec_using_openmp(part_vec_2, n - (size - 2) * d);	
 		MPI_Send(&part_sum_1, 1, MPI_DOUBLE, 0, tag + 1, MPI_COMM_WORLD);		
 		MPI_Send(&part_sum_2, 1, MPI_DOUBLE, 0, tag + 1, MPI_COMM_WORLD);	
 	}	
