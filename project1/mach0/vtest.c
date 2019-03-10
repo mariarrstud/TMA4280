@@ -17,6 +17,7 @@ int main(int argc, char** argv)
 		error = fabs(M_PI - compute_pi(pow(2, k)));
 		fprintf(vtest, "Error for n = %d: %f\n", (int)pow(2, k), error);
 	}
+	printf("Results saved in vtest.txt\n");
 	return 0;
 }
 
