@@ -5,6 +5,28 @@
 #include <omp.h>
 #include <math.h>
 
+//Function prototypes
+double *mk_1D_array(int n )
+
+int main(int argc, char **argv)
+{
+	if (argc < 2)
+	{
+		printf("Invalid numbr of arguments\n");
+		return 1;
+	}
+
+	int n = atoi(argv[1]);
+	if ((n & (n - 1)) != 0)
+	{
+		printf("n must be a power of two\n");
+		return 2;
+	}
+	
+	poisson(n);	
+	return 0;
+}
+
 double rhs(double x, double y)
 {
 	return 1.0;
@@ -21,17 +43,7 @@ void transpose(double *bt, double *b, int m)
 	}
 }
 
-void fst(solution, *len_sol, support, *len_sup)
-{
-
-}
-
-void fstinv(solution, *length1, z, *length2)
-{
-
-}
-
-int poisson(int n)
+void poisson(int n)
 {
 	int m = n - 1;
 	double h = 1.0 / n;
@@ -100,6 +112,8 @@ int poisson(int n)
 			u_max = umax > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
 		}
 	}
-	return 0;
 }
+
+
+
 
