@@ -53,7 +53,10 @@ int main(int argc, char **argv)
 	real time_start = MPI_Wtime();
 	
 	
-	MPI_Scatterv()
+	int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
+                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
+                 MPI_Datatype recvtype,
+                 int root, MPI_Comm comm)
 	real *grid = mk_1D_array(n+1, false);
 	for (size_t i = 0; i < n+1; i++) {
 		grid[i] = i * h;
@@ -75,7 +78,10 @@ int main(int argc, char **argv)
 		fst_(b[i], &n, z, &nn);
 	}
 	
-	MPI_Alltoallv()
+	int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
+                  const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
+                  const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
+                  MPI_Comm comm);
 	transpose(bt, b, m);
 	
 	
