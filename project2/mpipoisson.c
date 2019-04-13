@@ -17,7 +17,7 @@ void transpose(real **bt, real **b, size_t m);
 real rhs(real x, real y);
 real solution(real x, real y);
 void verification(real **u, size_t m, real *grid, real **error);
-void inf_norm(real **error, size_t m);
+real inf_norm(real **error, size_t m);
 
 void fst_(real *v, int *n, real *w, int *nn);
 void fstinv_(real *v, int *n, real *w, int *nn);
@@ -118,8 +118,38 @@ int main(int argc, char **argv)
 
 real rhs(real x, real y) {
 	//return 1;
-	verification_rhs = 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
+	real verification_rhs = 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
 	return verification_rhs;
+}
+
+real solution(real x, real y)
+{
+	real sol = sin(PI * x) * sin(2 * PI * y);
+	return sol;
+}
+
+void verification(real **u, size_t m, real *grid, real **error)
+{
+	for (size_t i = 0; i < m; i++) {
+		for (size_t j = 0; j < m; j++) {
+			error[i][j] = fabs(u[i][j] - solution(grid[i], grid[j]));
+		}
+	}
+}
+
+real inf_norm(real **error, size_t m)
+{
+	real norm = 0.0;
+	for (size_t i = 0; i < m; i++) {
+		real sum = 0.0;
+		for (size_t j = 0; j < m; j++) {
+			sum = sum + fabs(error[i][j]);
+		}
+		if (sum > norm) {
+			norm = sum;
+		}
+	}
+	return norm;
 }
 
 void transpose(real **bt, real **b, size_t m)
@@ -152,34 +182,4 @@ real **mk_2D_array(size_t n1, size_t n2, bool zero)
 		ret[i] = ret[i-1] + n2;
 	}
 	return ret;
-}
-
-real solution(real x, real y)
-{
-	real sol = sin(PI * x) * sin(2 * PI * y);
-	return sol;
-}
-
-void verification(real **u, real u_max, size_t m, real *grid, real **error)
-{
-	for (size_t i = 0; i < m; i++) {
-		for (size_t j = 0; j < m; j++) {
-			error[i][j] = fabs(u[i][j] - solution(grid[i], grid[j]));
-		}
-	}
-}
-
-real inf_norm(real **error, size_t m)
-{
-	real norm = 0.0;
-	for (size_t i = 0; i < m; i++) {
-		real sum = 0.0;
-		for (size_t j = 0; j < m; j++) {
-			sum = sum + fabs(error[i][j]);
-		}
-		if (sum > norm) {
-			norm = sum;
-		}
-	}
-	return norm;
 }
