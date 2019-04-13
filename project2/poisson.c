@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     }
     real **error = mk_2D_array(m, m, false);
     verification(b, m, grid, error);
-    real norm = inf_norm(error);
+    real norm = inf_norm(error, m);
     printf("Error: %e, h: %e\n", norm, h);
     return 0;
 }

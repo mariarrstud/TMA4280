@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2
+CFLAGS = C99
 TARGET = poisson
 
 $(TARGET): poisson.o fst.o
