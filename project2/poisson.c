@@ -85,15 +85,6 @@ real rhs(real x, real y) {
     return verification_rhs;
 }
 
-void transpose(real **bt, real **b, size_t m)
-{
-    for (size_t i = 0; i < m; i++) {
-        for (size_t j = 0; j < m; j++) {
-            bt[i][j] = b[j][i];
-        }
-    }
-}
-
 real solution(real x, real y)
 {
 	real sol = sin(PI * x) * sin(2 * PI * y);
@@ -127,6 +118,15 @@ real inf_norm(real **error, size_t m)
 		}
 	}
 	return norm;
+}
+
+void transpose(real **bt, real **b, size_t m)
+{
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < m; j++) {
+            bt[i][j] = b[j][i];
+        }
+    }
 }
 
 real *mk_1D_array(size_t n, bool zero)
