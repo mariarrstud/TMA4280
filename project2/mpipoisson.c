@@ -118,7 +118,15 @@ int main(int argc, char **argv)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
-	
+	double u_max = 0.0;
+	#pragma omp parallel for schedule(static)
+    	for (size_t i = 0; i < m; i++) {
+        	for (size_t j = 0; j < m; j++) {
+        		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
+        	}
+    	}
+	printf("u_max = %e\n", u_max);
+
 	real duration = time_start - MPI_Wtime();
 	printf("T%e: %e\n", size, duration);
 	
