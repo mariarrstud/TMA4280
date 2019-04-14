@@ -46,16 +46,26 @@ int main(int argc, char **argv)
 		MPI_Finalize();
 		return 3;
 	}
-	
-	
-	
-	int m = n - 1;
 	real h = 1.0 / n;
-	real time_start = MPI_Wtime();
-	
-	sendcounts[i] = m / size
+	int m = n - 1;
+	if (size > m) {
+		size = m;
+	}
+	int rows_p = m / size;
 	int rem = m % size;
+	int row_count[size + 1];
+	row_count[0] = 0;
+	for (size_t i = 1; i < size + 1; i++) {
+		if (rem > 0) {
+			row_count[i] = row_count[i - 1] + rows_p + 1;
+			rem --;
+		}
+		else {
+			row_count[i] = row_count[i - 1] + rows_p;	
+		}
+	}
 	
+	real time_start = MPI_Wtime();
 	real *grid = mk_1D_array(n + 1, false);
 	for (size_t i = 0; i < n+1; i++) {
 		grid[i] = i * h;
@@ -64,24 +74,19 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < m; i++) {
 		diag[i] = 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
-	
-	//Init
 	real **b = mk_2D_array(m, m, false);
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
-	for (size_t i = 0; i < m; i++) {
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	//end
 	
-	//Del 1
 	for (size_t i = 0; i < m; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
-	//end
 	
 	//Del 2: Alltoall
 	int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
