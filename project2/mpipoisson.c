@@ -15,9 +15,6 @@ real *mk_1D_array(size_t n, bool zero);
 real **mk_2D_array(size_t n1, size_t n2, bool zero);
 void transpose(real **bt, real **b, size_t m);
 real rhs(real x, real y);
-real solution(real x, real y);
-void verification(real **u, size_t m, real *grid, real **error);
-real inf_norm(real **error, size_t m);
 
 void fst_(real *v, int *n, real *w, int *nn);
 void fstinv_(real *v, int *n, real *w, int *nn);
@@ -46,82 +43,134 @@ int main(int argc, char **argv)
 		MPI_Finalize();
 		return 3;
 	}
-	int m = n - 1;
 	real h = 1.0 / n;
+	int m = n - 1;
+	if (size > m) {
+		size = m;
+	}
+	int rows_p = m / size;
+	int rem = m % size;
+	int counts[size] = { [0 ... size] = rows_p};
+	int displs[size] = { 0 };
+	for (size_t i = 1; i < size; i++) {
+		if (rem > 0) {
+			displs[i] = displs[i - 1] + rows_p + 1;
+			counts[i - 1] ++;
+			rem --;
+		}
+		else {
+			displs[i] = displs[i - 1] + rows_p;	
+		}
+	}
+	
 	real time_start = MPI_Wtime();
 	
-	
-	int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
-                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                 MPI_Datatype recvtype,
-                 int root, MPI_Comm comm)
-	
 	real *grid = mk_1D_array(n + 1, false);
+	#pragma omp parallel for schedule(static) reduction(+: grid)
 	for (size_t i = 0; i < n+1; i++) {
-		grid[i] = i * h;
+		grid[i] += i * h;
 	}
 	real *diag = mk_1D_array(m, false);
+	#pragma omp parallel for schedule(static) reduction(+: diag)
 	for (size_t i = 0; i < m; i++) {
-		diag[i] = 2.0 * (1.0 - cos((i+1) * PI / n));
+		diag[i] += 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
-	
-	//Init
 	real **b = mk_2D_array(m, m, false);
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
-	for (size_t i = 0; i < m; i++) {
+	#pragma omp parallel for schedule(static) reduction(+: b)
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
-			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
+			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	//end
-	
-	//Del 1
-	for (size_t i = 0; i < m; i++) {
+	#pragma omp parallel for schedule(static) reduction(+: b, z)
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
-	//end
 	
-	//Del 2: Alltoall
-	int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
-                  const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
-                  const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
-                  MPI_Comm comm);
-	
-	transpose(bt, b, m);
-	//end
-	
-	for (size_t i = 0; i < m; i++) {
-		fstinv_(bt[i], &n, z, &nn);
+	//Pack data into sendbuffer
+	double sendbuf1[m * counts[1]];
+	size_t ind_send1 = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+			for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+				sendbuf1[ind_send1] = b[i][j];
+				ind_send1 ++;
+			}
+		}
+	}
+	double recvbuf1[m * counts[1]];
+	//MPI_Alltoallv
+	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_Double, &recvbuf1, 
+		      counts, displs, MPI_Double, MPI_Comm comm);
+	//Unwrap data
+	size_t ind_recv1 = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+			for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+				bt[i][j] = recvbuf1[ind_recv1];
+				ind_recv1 ++;
+			}
+		}
 	}
 	
-	//1
-	for (size_t i = 0; i < m; i++) {
+	#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+		fstinv_(bt[i], &n, z, &nn);
+	}
+	#pragma omp parallel for schedule(static) reduction(+: bt)
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	for (size_t i = 0; i < m; i++) {
+	#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
-	//end
 	
-	//2
-	transpose(b, bt, m);
-	//end
+	//Pack data into sendbuffer
+	double sendbuf2[m * counts[1]];
+	size_t ind_send2 = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+			for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+				sendbuf2[ind_send2] = bt[i][j];
+				ind_send2 ++;
+			}
+		}
+	}
+	double recvbuf2[m * counts[1]];
+	//MPI_Alltoallv
+	MPI_Alltoallv(sendbuf, counts, displs, MPI_Double, recvbuf, 
+		      counts, displs, MPI_Double, MPI_Comm comm);
+	//Unwrap data
+	size_t ind_recv2 = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+			for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+				b[i][j] = recvbuf2[ind_recv2];
+				ind_recv2 ++;
+			}
+		}
+	}
 	
-	//3
-	for (size_t i = 0; i < m; i++) {
+	#pragma omp parallel for schedule(static) reduction(+: b, z)
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
-	//end
 	
 	real duration = time_start - MPI_Wtime();
-	real **error = mk_2D_array(m, m, false);
-	verification(b, m, grid, error);
-	real norm = inf_norm(error, m);
-	printf("Error: %e, h: %e\n", norm, h);
+	
+	double u_max = 0.0;
+    	for (size_t i = 0; i < m; i++) {
+        	for (size_t j = 0; j < m; j++) {
+        		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
+        	}
+    	}
+	printf("u_max = %e\n", u_max);
 	printf("T%e: %e\n", size, duration);
 	
 	MPI_Finalize();
@@ -129,48 +178,7 @@ int main(int argc, char **argv)
 }	
 
 real rhs(real x, real y) {
-	//return 1;
-	real verification_rhs = 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
-	return verification_rhs;
-}
-
-real solution(real x, real y)
-{
-	real sol = sin(PI * x) * sin(2 * PI * y);
-	return sol;
-}
-
-void verification(real **u, size_t m, real *grid, real **error)
-{
-	for (size_t i = 0; i < m; i++) {
-		for (size_t j = 0; j < m; j++) {
-			error[i][j] = fabs(u[i][j] - solution(grid[i], grid[j]));
-		}
-	}
-}
-
-real inf_norm(real **error, size_t m)
-{
-	real norm = 0.0;
-	for (size_t i = 0; i < m; i++) {
-		real sum = 0.0;
-		for (size_t j = 0; j < m; j++) {
-			sum = sum + fabs(error[i][j]);
-		}
-		if (sum > norm) {
-			norm = sum;
-		}
-	}
-	return norm;
-}
-
-void transpose(real **bt, real **b, size_t m)
-{
-	for (size_t i = 0; i < m; i++) {
-        	for (size_t j = 0; j < m; j++) {
-            		bt[i][j] = b[j][i];
-        	}
-    	}
+	return 1;
 }
 
 real *mk_1D_array(size_t n, bool zero)
