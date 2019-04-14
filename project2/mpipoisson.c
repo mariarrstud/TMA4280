@@ -46,15 +46,15 @@ int main(int argc, char **argv)
 		MPI_Finalize();
 		return 3;
 	}
+	
+	
+	
 	int m = n - 1;
 	real h = 1.0 / n;
 	real time_start = MPI_Wtime();
 	
-	
-	int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
-                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                 MPI_Datatype recvtype,
-                 int root, MPI_Comm comm)
+	sendcounts[i] = m / size
+	int rem = m % size;
 	
 	real *grid = mk_1D_array(n + 1, false);
 	for (size_t i = 0; i < n+1; i++) {
@@ -117,6 +117,8 @@ int main(int argc, char **argv)
 	}
 	//end
 	
+	
+	
 	real duration = time_start - MPI_Wtime();
 	real **error = mk_2D_array(m, m, false);
 	verification(b, m, grid, error);
@@ -125,6 +127,8 @@ int main(int argc, char **argv)
 	printf("T%e: %e\n", size, duration);
 	
 	MPI_Finalize();
+	free(sendcounts);
+    	free(displs);
 	return 0;
 }	
 
