@@ -15,9 +15,6 @@ real *mk_1D_array(size_t n, bool zero);
 real **mk_2D_array(size_t n1, size_t n2, bool zero);
 void transpose(real **bt, real **b, size_t m);
 real rhs(real x, real y);
-real solution(real x, real y);
-void verification(real **u, size_t m, real *grid, real **error);
-real inf_norm(real **error, size_t m);
 
 void fst_(real *v, int *n, real *w, int *nn);
 void fstinv_(real *v, int *n, real *w, int *nn);
