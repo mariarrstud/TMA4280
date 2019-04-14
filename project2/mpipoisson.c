@@ -68,10 +68,12 @@ int main(int argc, char **argv)
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
+	#pragma omp parallel for schedule(static)
 	for (size_t i = 0; i < n+1; i++) {
 		grid[i] = i * h;
 	}
 	real *diag = mk_1D_array(m, false);
+	#pragma omp parallel for schedule(static)
 	for (size_t i = 0; i < m; i++) {
 		diag[i] = 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
@@ -79,11 +81,13 @@ int main(int argc, char **argv)
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
+	#pragma omp parallel for schedule(static)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
+	#pragma omp parallel for schedule(static)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
@@ -94,30 +98,28 @@ int main(int argc, char **argv)
                   MPI_Comm comm);
 	
 	transpose(bt, b, m);
-	
+	#pragma omp parallel for schedule(static)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
+	#pragma omp parallel for schedule(static)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
+	#pragma omp parallel for schedule(static)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
 	//Alltoall
 	transpose(b, bt, m);
-	
+	#pragma omp parallel for schedule(static)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
 	
 	real duration = time_start - MPI_Wtime();
-	real **error = mk_2D_array(m, m, false);
-	verification(b, m, grid, error);
-	real norm = inf_norm(error, m);
-	printf("Error: %e, h: %e\n", norm, h);
 	printf("T%e: %e\n", size, duration);
 	
 	MPI_Finalize();
@@ -125,39 +127,7 @@ int main(int argc, char **argv)
 }	
 
 real rhs(real x, real y) {
-	//return 1;
-	real verification_rhs = 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
-	return verification_rhs;
-}
-
-real solution(real x, real y)
-{
-	real sol = sin(PI * x) * sin(2 * PI * y);
-	return sol;
-}
-
-void verification(real **u, size_t m, real *grid, real **error)
-{
-	for (size_t i = 0; i < m; i++) {
-		for (size_t j = 0; j < m; j++) {
-			error[i][j] = fabs(u[i][j] - solution(grid[i], grid[j]));
-		}
-	}
-}
-
-real inf_norm(real **error, size_t m)
-{
-	real norm = 0.0;
-	for (size_t i = 0; i < m; i++) {
-		real sum = 0.0;
-		for (size_t j = 0; j < m; j++) {
-			sum = sum + fabs(error[i][j]);
-		}
-		if (sum > norm) {
-			norm = sum;
-		}
-	}
-	return norm;
+	return 1;
 }
 
 void transpose(real **bt, real **b, size_t m)
