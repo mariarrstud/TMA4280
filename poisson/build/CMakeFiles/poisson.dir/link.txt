@@ -1,0 +1,1 @@
+/usr/bin/mpicc -std=c99  -fopenmp -O3 -DNDEBUG  -rdynamic CMakeFiles/poisson.dir/poisson.c.o  -o poisson libcommon.a -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lgfortran -lm -lquadmath -lm 
