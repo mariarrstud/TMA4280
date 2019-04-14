@@ -84,11 +84,9 @@ int main(int argc, char **argv)
 			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
-	
 	//Alltoall
 	int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
                   const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
@@ -96,11 +94,10 @@ int main(int argc, char **argv)
                   MPI_Comm comm);
 	
 	transpose(bt, b, m);
-
+	
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
-	
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
@@ -109,7 +106,6 @@ int main(int argc, char **argv)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
-	
 	//Alltoall
 	transpose(b, bt, m);
 	
@@ -125,8 +121,6 @@ int main(int argc, char **argv)
 	printf("T%e: %e\n", size, duration);
 	
 	MPI_Finalize();
-	free(sendcounts);
-    	free(displs);
 	return 0;
 }	
 
