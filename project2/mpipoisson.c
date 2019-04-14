@@ -88,13 +88,49 @@ int main(int argc, char **argv)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
+	
+	
+	//Alltoall transpose(bt, b, m); bt[i][j] = b[j][i];
+	//Pack data into sendbuffer
+	double sendbuf[m * row_count[1]];
+	size_t ind = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
+			for (size_t j = row_count[k]; j < row_count[k + 1]; j++) {
+				sendbuf[ind * (rank + 1)] = b[i][j];
+				ind ++;
+			}
+		}
+	}
+	
+	
+	
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
+		for (size_t j = 0; j < m; j++) {
+			sendbuf[k * (rank + 1)] = b[i * (rank + 1)][j];
+			k ++;
+		}
+	}
+	//MPI
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
+		for (size_t j = 0; j < m; j++) {
+			MPI_Alltoallv(&b[j][i], row_count[rank + 1] - row_count[rank],
+			row_count, MPI_Double,
+
+			&bt[i][j], row_count[rank + 1] - row_count[rank],
+			row_count, MPI_Double, MPI_Comm comm);
+		}
+	}
+	//Unwrap data
 	//Alltoall
 	int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
                   const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
                   const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
                   MPI_Comm comm);
 	
-	transpose(bt, b, m);
+	
+	
+	
 	#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
@@ -133,16 +169,6 @@ int main(int argc, char **argv)
 
 real rhs(real x, real y) {
 	return 1;
-}
-
-void transpose(real **bt, real **b, size_t m)
-{
-	#pragma omp parallel for schedule(static) reducion(+: bt)
-	for (size_t i = 0; i < m; i++) {
-        	for (size_t j = 0; j < m; j++) {
-            		bt[i][j] = b[j][i];
-        	}
-    	}
 }
 
 real *mk_1D_array(size_t n, bool zero)
