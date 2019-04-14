@@ -65,26 +65,26 @@ int main(int argc, char **argv)
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: grid)
 	for (size_t i = 0; i < n+1; i++) {
-		grid[i] = i * h;
+		grid[i] += i * h;
 	}
 	real *diag = mk_1D_array(m, false);
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: diag)
 	for (size_t i = 0; i < m; i++) {
-		diag[i] = 2.0 * (1.0 - cos((i+1) * PI / n));
+		diag[i] += 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
 	real **b = mk_2D_array(m, m, false);
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: b)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
-			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
+			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
@@ -95,28 +95,28 @@ int main(int argc, char **argv)
                   MPI_Comm comm);
 	
 	transpose(bt, b, m);
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: bt)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
 	//Alltoall
 	transpose(b, bt, m);
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
 	double u_max = 0.0;
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) reduction(+: u_max)
     	for (size_t i = 0; i < m; i++) {
         	for (size_t j = 0; j < m; j++) {
         		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
