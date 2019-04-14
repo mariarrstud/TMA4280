@@ -50,13 +50,12 @@ int main(int argc, char **argv)
 	}
 	int rows_p = m / size;
 	int rem = m % size;
-	int counts[size] = { [0 . . . size] = rows_p};
-	int displs[size];
-	displs[0] = 0;
+	int counts[size] = { [0 ... size] = rows_p};
+	int displs[size] = { 0 };
 	for (size_t i = 1; i < size; i++) {
 		if (rem > 0) {
 			displs[i] = displs[i - 1] + rows_p + 1;
-			counts[i] ++;
+			counts[i - 1] ++;
 			rem --;
 		}
 		else {
@@ -81,13 +80,13 @@ int main(int argc, char **argv)
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
 	#pragma omp parallel for schedule(static) reduction(+: b)
-	for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
 	#pragma omp parallel for schedule(static) reduction(+: b, z)
-	for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
 	
@@ -95,8 +94,8 @@ int main(int argc, char **argv)
 	double sendbuf[m * counts[1]];
 	size_t ind_send = 0;
 	for (size_t k = 0; k < size; k++) {
-		for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
-			for (size_t j = displs[k]; j < displs[k + 1]; j++) {
+		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+			for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
 				sendbuf[ind_send] = b[i][j];
 				ind_send ++;
 			}
@@ -104,12 +103,13 @@ int main(int argc, char **argv)
 	}
 	double recvbuf[m * counts[1]];
 	//MPI_Alltoallv
-	MPI_Alltoallv(sendbuf, sendcounts, sdispls, MPI_Double, recvbuf, recvcounts, rdispls, MPI_Double, MPI_Comm comm);
+	MPI_Alltoallv(sendbuf, counts, displs, MPI_Double, recvbuf, 
+		      counts, displs, MPI_Double, MPI_Comm comm);
 	//Unwrap data
 	size_t ind_recv = 0;
 	for (size_t k = 0; k < size; k++) {
-		for (size_t j = displs[k]; j < displs[k + 1]; j++) {
-			for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+		for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+			for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 				bt[i][j] = recvbuf[ind_recv];
 				ind_recv ++;
 			}
@@ -118,23 +118,25 @@ int main(int argc, char **argv)
 	
 	
 	#pragma omp parallel for schedule(static) reduction(+: bt, z)
-	for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
 	#pragma omp parallel for schedule(static) reduction(+: bt)
-	for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
 	#pragma omp parallel for schedule(static) reduction(+: bt, z)
-	for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
+	
 	//Alltoall
 	transpose(b, bt, m);
+	
 	#pragma omp parallel for schedule(static) reduction(+: b, z)
-	for (size_t i = displs[rank]; i < displs[rank + 1]; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
 	
