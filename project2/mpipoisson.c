@@ -137,6 +137,7 @@ real rhs(real x, real y) {
 
 void transpose(real **bt, real **b, size_t m)
 {
+	#pragma omp parallel for schedule(static) reducion(+: bt)
 	for (size_t i = 0; i < m; i++) {
         	for (size_t j = 0; j < m; j++) {
             		bt[i][j] = b[j][i];
