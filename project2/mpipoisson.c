@@ -91,31 +91,30 @@ int main(int argc, char **argv)
 	}
 	
 	//Pack data into sendbuffer
-	double sendbuf[m * counts[1]];
-	size_t ind_send = 0;
+	double sendbuf1[m * counts[1]];
+	size_t ind_send1 = 0;
 	for (size_t k = 0; k < size; k++) {
 		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 			for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
-				sendbuf[ind_send] = b[i][j];
-				ind_send ++;
+				sendbuf1[ind_send1] = b[i][j];
+				ind_send1 ++;
 			}
 		}
 	}
-	double recvbuf[m * counts[1]];
+	double recvbuf1[m * counts[1]];
 	//MPI_Alltoallv
-	MPI_Alltoallv(sendbuf, counts, displs, MPI_Double, recvbuf, 
+	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_Double, &recvbuf1, 
 		      counts, displs, MPI_Double, MPI_Comm comm);
 	//Unwrap data
-	size_t ind_recv = 0;
+	size_t ind_recv1 = 0;
 	for (size_t k = 0; k < size; k++) {
 		for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
 			for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
-				bt[i][j] = recvbuf[ind_recv];
-				ind_recv ++;
+				bt[i][j] = recvbuf1[ind_recv1];
+				ind_recv1 ++;
 			}
 		}
 	}
-	
 	
 	#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
@@ -132,8 +131,31 @@ int main(int argc, char **argv)
 		fst_(bt[i], &n, z, &nn);
 	}
 	
-	//Alltoall
-	transpose(b, bt, m);
+	//Pack data into sendbuffer
+	double sendbuf2[m * counts[1]];
+	size_t ind_send2 = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+			for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+				sendbuf2[ind_send2] = bt[i][j];
+				ind_send2 ++;
+			}
+		}
+	}
+	double recvbuf2[m * counts[1]];
+	//MPI_Alltoallv
+	MPI_Alltoallv(sendbuf, counts, displs, MPI_Double, recvbuf, 
+		      counts, displs, MPI_Double, MPI_Comm comm);
+	//Unwrap data
+	size_t ind_recv2 = 0;
+	for (size_t k = 0; k < size; k++) {
+		for (size_t j = displs[k]; j < displs[k] + counts[k]; j++) {
+			for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+				b[i][j] = recvbuf2[ind_recv2];
+				ind_recv2 ++;
+			}
+		}
+	}
 	
 	#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
