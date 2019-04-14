@@ -66,6 +66,7 @@ int main(int argc, char **argv)
 	}
 	
 	real time_start = MPI_Wtime();
+	
 	real *grid = mk_1D_array(n + 1, false);
 	for (size_t i = 0; i < n+1; i++) {
 		grid[i] = i * h;
@@ -84,45 +85,37 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	for (size_t i = 0; i < m; i++) {
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
 	
-	//Del 2: Alltoall
+	//Alltoall
 	int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
                   const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
                   const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
                   MPI_Comm comm);
 	
 	transpose(bt, b, m);
-	//end
-	
-	for (size_t i = 0; i < m; i++) {
+
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
 	
-	//1
-	for (size_t i = 0; i < m; i++) {
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	for (size_t i = 0; i < m; i++) {
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
-	//end
 	
-	//2
+	//Alltoall
 	transpose(b, bt, m);
-	//end
 	
-	//3
-	for (size_t i = 0; i < m; i++) {
+	for (size_t i = row_count[rank]; i < row_count[rank + 1]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
-	//end
-	
-	
 	
 	real duration = time_start - MPI_Wtime();
 	real **error = mk_2D_array(m, m, false);
