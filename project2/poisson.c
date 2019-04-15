@@ -226,7 +226,8 @@ void print_matrix(double **mat, int len)
 }
 
 real rhs(real x, real y) {
-	return 1;
+	//return 1;
+	return (5 * PI * PI * sin(PI * x) * sin(2 * PI *y));
 }
 
 real *mk_1D_array(size_t n, bool zero)
