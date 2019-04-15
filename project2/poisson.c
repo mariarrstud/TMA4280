@@ -91,16 +91,11 @@ int main(int argc, char **argv)
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
 	//#pragma omp parallel for schedule(static) reduction(+: b)
-	for (size_t i = displs[rank]; i < displs[rank] + counts[rank] - 1; i++) {
+	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
-			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
+			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	
-	for (size_t i = 1; i < 2; i++) {
-		printf("%ld\n", i);	
-	}
-	
 	
 	//#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
