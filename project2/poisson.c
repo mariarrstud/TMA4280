@@ -75,15 +75,17 @@ int main(int argc, char **argv)
 		mpi_displs[i] = displs[i] * counts[rank];
 	}
 	
+	nthreads = omp_get_num_threads();
+	printf("Number of threads: %d", nthreads);
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
-	//#pragma omp parallel for schedule(static) reduction(+: grid)
+	#pragma omp parallel for schedule(static) reduction(+: grid)
 	for (size_t i = 0; i < n+1; i++) {
 		grid[i] += i * h;
 	}
 	real *diag = mk_1D_array(m, false);
-	//#pragma omp parallel for schedule(static) reduction(+: diag)
+	#pragma omp parallel for schedule(static) reduction(+: diag)
 	for (size_t i = 0; i < m; i++) {
 		diag[i] += 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
@@ -91,18 +93,17 @@ int main(int argc, char **argv)
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
-	//#pragma omp parallel for schedule(static) reduction(+: b)
+	#pragma omp parallel for schedule(static) reduction(+: b)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
-			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
+			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
 	
-	//#pragma omp parallel for schedule(static) reduction(+: b, z)
+	#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
-	
 	//Pack data into sendbuffer
 	double sendbuf1[m * counts[rank]];
 	size_t ind_send1 = 0;
@@ -114,7 +115,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
 	double recvbuf1[m * counts[rank]];
 	//MPI_Alltoallv
 	MPI_Alltoallv(&sendbuf1, mpi_counts, mpi_displs, MPI_DOUBLE, &recvbuf1, 
@@ -129,22 +129,20 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
-	//#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
-	//#pragma omp parallel for schedule(static) reduction(+: bt)
+	#pragma omp parallel for schedule(static) reduction(+: bt)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	//#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
-	
 	//Pack data into sendbuffer
 	double sendbuf2[m * counts[rank]];
 	size_t ind_send2 = 0;
@@ -170,12 +168,10 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
-	//#pragma omp parallel for schedule(static) reduction(+: b, z)
+	#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
-	
 	real duration = time_start - MPI_Wtime();
 	
 	double u_max = 0.0;
@@ -194,6 +190,7 @@ int main(int argc, char **argv)
 	if (rank == 0) {
 		printf("u_max = %e\n", global_u_max);
     		printf("error = %e, h^2 = %e\n", global_error, h2);
+		printf("Processes: %d, Duration: %e", size, duration);
 	}
 	
 	MPI_Finalize();
