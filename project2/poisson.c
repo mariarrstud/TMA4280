@@ -15,9 +15,6 @@ real *mk_1D_array(size_t n, bool zero);
 real **mk_2D_array(size_t n1, size_t n2, bool zero);
 void transpose(real **bt, real **b, size_t m);
 real rhs(real x, real y);
-void print_vec(double *vec, int len);
-void print_vec_int(int *vec, int len);
-void print_matrix(double **mat, int len);
 
 void fst_(real *v, int *n, real *w, int *nn);
 void fstinv_(real *v, int *n, real *w, int *nn);
@@ -190,37 +187,6 @@ int main(int argc, char **argv)
 	MPI_Finalize();
 	return 0;
 }	
-
-void print_vec(double *vec, int len)
-{
-	for (int i = 0; i < len; i++)
-	{
-		printf("%e ", vec[i]);
-	}
-	printf("\n");
-}
-
-void print_vec_int(int *vec, int len)
-{
-	for (int i = 0; i < len; i++)
-	{
-		printf("%d ", vec[i]);
-	}
-	printf("\n");
-}
-
-void print_matrix(double **mat, int len)
-{
-	for (int i = 0; i < len; i++)
-	{
-		for (int j = 0; j < len; j++)
-		{
-			printf("%e ", mat[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-}
 
 real rhs(real x, real y) {
 	//return 1;
