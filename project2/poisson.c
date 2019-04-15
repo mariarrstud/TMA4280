@@ -15,6 +15,8 @@ real *mk_1D_array(size_t n, bool zero);
 real **mk_2D_array(size_t n1, size_t n2, bool zero);
 void transpose(real **bt, real **b, size_t m);
 real rhs(real x, real y);
+void print_vec(double *vec, int len);
+void print_matrix(double **mat, int len);
 
 void fst_(real *v, int *n, real *w, int *nn);
 void fstinv_(real *v, int *n, real *w, int *nn);
@@ -66,12 +68,12 @@ int main(int argc, char **argv)
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
-	#pragma omp parallel for schedule(static) reduction(+: grid)
+	//#pragma omp parallel for schedule(static) reduction(+: grid)
 	for (size_t i = 0; i < n+1; i++) {
 		grid[i] += i * h;
 	}
 	real *diag = mk_1D_array(m, false);
-	#pragma omp parallel for schedule(static) reduction(+: diag)
+	//#pragma omp parallel for schedule(static) reduction(+: diag)
 	for (size_t i = 0; i < m; i++) {
 		diag[i] += 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
@@ -79,16 +81,19 @@ int main(int argc, char **argv)
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
-	#pragma omp parallel for schedule(static) reduction(+: b)
+	//#pragma omp parallel for schedule(static) reduction(+: b)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	#pragma omp parallel for schedule(static) reduction(+: b, z)
+	//#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
+	
+	printf("Matrix b process %d :", rank);
+	print_matrix(b, m);
 	
 	//Pack data into sendbuffer
 	double sendbuf1[m * counts[1]];
@@ -101,6 +106,10 @@ int main(int argc, char **argv)
 			}
 		}
 	}
+	
+	printf("Sendbuffer process %d :", rank);
+	print_vec(sendbuf1, m  * counts[1]);
+	
 	double recvbuf1[m * counts[1]];
 	//MPI_Alltoallv
 	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_Double, &recvbuf1, 
@@ -116,17 +125,23 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	printf("Recvbuffer process %d :", rank);
+	print_vec(recvbuf1, m  * counts[1]);
+	
+	printf("Matrix bt process %d :", rank);
+	print_matrix(bt, m);
+	
+	//#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
-	#pragma omp parallel for schedule(static) reduction(+: bt)
+	//#pragma omp parallel for schedule(static) reduction(+: bt)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	//#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
@@ -157,7 +172,7 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	#pragma omp parallel for schedule(static) reduction(+: b, z)
+	//#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
@@ -171,11 +186,34 @@ int main(int argc, char **argv)
         	}
     	}
 	printf("u_max = %e\n", u_max);
-	printf("T%e: %e\n", size, duration);
+	//printf("T%e: %e\n", size, duration);
 	
 	MPI_Finalize();
 	return 0;
 }	
+
+void print_vec(double *vec, int len)
+{
+	for (int i = 0; i < len; i++)
+	{
+		printf("%e ", vec[i]);
+	}
+	printf("\n");
+}
+
+
+void print_matrix(double **mat, int len)
+{
+	for (int i = 0; i < len; i++)
+	{
+		for (int j = 0; j < len; j++)
+		{
+			printf("%e ", mat[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
 
 real rhs(real x, real y) {
 	return 1;
