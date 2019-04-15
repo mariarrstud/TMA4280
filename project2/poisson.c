@@ -68,11 +68,21 @@ int main(int argc, char **argv)
 			counts[i - 1] = rows_p;
 		}
 	}
+	int mpi_counts[size];
+	int mpi_displs[size];
+	for (size_t i = 0; i < size; i++) {
+		mpi_counts[i] = counts[i] * counts[rank];
+		mpi_displs[i] = displs[i] * counts[rank];
+	}
 	
 	printf("counts:\n");
 	print_vec_int(counts, size);
 	printf("displs:\n");
 	print_vec_int(displs, size);
+	printf("mpi_counts:\n");
+	print_vec_int(mpi_counts, size);
+	printf("mpi_displs:\n");
+	print_vec_int(mpi_displs, size);
 	
 	real time_start = MPI_Wtime();
 	
@@ -122,8 +132,8 @@ int main(int argc, char **argv)
 	
 	double recvbuf1[m * counts[rank]];
 	//MPI_Alltoallv
-	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_DOUBLE, &recvbuf1, 
-		      counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Alltoallv(&sendbuf1, mpi_counts, mpi_displs, MPI_DOUBLE, &recvbuf1, 
+		      mpi_counts, mpi_displs, MPI_DOUBLE, MPI_COMM_WORLD);
 	//Unwrap data
 	size_t ind_recv1 = 0;
 	for (size_t k = 0; k < size; k++) {
@@ -169,8 +179,8 @@ int main(int argc, char **argv)
 	}
 	double recvbuf2[m * counts[rank]];
 	//MPI_Alltoallv
-	MPI_Alltoallv(&sendbuf2, counts, displs, MPI_DOUBLE, &recvbuf2, 
-		      counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Alltoallv(&sendbuf2, mpi_counts, mpi_displs, MPI_DOUBLE, &recvbuf2, 
+		      mpi_counts, mpi_displs, MPI_DOUBLE, MPI_COMM_WORLD);
 	//Unwrap data
 	size_t ind_recv2 = 0;
 	for (size_t k = 0; k < size; k++) {
