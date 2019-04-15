@@ -56,6 +56,7 @@ int main(int argc, char **argv)
 	int counts[size];
 	counts[size - 1] = rows_p;
 	int displs[size];
+	displs[0] = 0;
 	for (size_t i = 1; i < size; i++) {
 		if (rem > 0) {
 			displs[i] = displs[i - 1] + rows_p + 1;
