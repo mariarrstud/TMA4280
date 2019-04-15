@@ -32,8 +32,8 @@ int main(int argc, char **argv)
         return 1;
 	}
 	int n = atoi(argv[1]);
-	if ((n & (n-1)) != 0) {
-		printf("n must be a power-of-two\n");
+	if ((n & (n-1)) != 0 || n =< 2) {
+		printf("n must be a power-of-two, and at least four\n");
 		return 2;
 	}
 	int rank, size;
