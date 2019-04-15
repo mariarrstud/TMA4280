@@ -152,14 +152,16 @@ int main(int argc, char **argv)
      * norm.
      */
     double u_max = 0.0;
+    double error = 0.0;
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < m; j++) {
             u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
+            error = u_max > fabs(b[i][j]) ? u_max : fabc(b[i][j] - (sin(PI * grid[i + 1]) * sin(2 * PI * grid[j + 1])))
         }
     }
 
     printf("u_max = %e\n", u_max);
-
+    printf("error = %e, h = %e\n", error, h);
     return 0;
 }
 
@@ -169,7 +171,8 @@ int main(int argc, char **argv)
  */
 
 real rhs(real x, real y) {
-    return 1;
+    //return 1;
+    return (5 * Pi * PI * sin(PI * x) * sin(2 * PI *y));
 }
 
 /*
