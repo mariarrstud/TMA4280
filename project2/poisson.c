@@ -75,19 +75,19 @@ int main(int argc, char **argv)
 		mpi_displs[i] = displs[i] * counts[rank];
 	}
 	
-	nthreads = omp_get_num_threads();
+	int nthreads = omp_get_num_threads();
 	printf("Number of threads: %d", nthreads);
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
-	#pragma omp parallel for schedule(static) reduction(+: grid)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = 0; i < n+1; i++) {
-		grid[i] += i * h;
+		grid[i] = i * h;
 	}
 	real *diag = mk_1D_array(m, false);
-	#pragma omp parallel for schedule(static) reduction(+: diag)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = 0; i < m; i++) {
-		diag[i] += 2.0 * (1.0 - cos((i+1) * PI / n));
+		diag[i] = 2.0 * (1.0 - cos((i+1) * PI / n));
 	}
 	real **b = mk_2D_array(m, m, false);
 	real **bt = mk_2D_array(m, m, false);
@@ -99,7 +99,6 @@ int main(int argc, char **argv)
 			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	
 	#pragma omp parallel for schedule(static) reduction(+: b, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
