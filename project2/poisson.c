@@ -178,16 +178,17 @@ int main(int argc, char **argv)
 	
 	real duration = time_start - MPI_Wtime();
 	
-	
-	double u_max;
-    	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
-        	for (size_t j = 0; j < m; j++) {
-        		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
-        	}
-    	}
 	if (rank == 0) {
+		double u_max;
+    		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
+        		for (size_t j = 0; j < m; j++) {
+        		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
+			error = u_max > fabs(b[i][j]) ? error : fabs(b[i][j] - (sin(PI * grid[i + 1]) * sin(2 * PI * grid[j + 1])));
+        		}
+    		}
 		printf("u_max = %e\n", u_max);
-		//printf("T%e: %e\n", size, duration);
+		double h2 = h * h;
+    		printf("error = %e, h^2 = %e\n", error, h2);
 	}
 	
 	MPI_Finalize();
