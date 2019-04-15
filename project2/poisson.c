@@ -93,13 +93,13 @@ int main(int argc, char **argv)
 	real **bt = mk_2D_array(m, m, false);
 	int nn = 4 * n;
 	real *z = mk_1D_array(nn, false);
-	#pragma omp parallel for schedule(static) reduction(+: b)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	#pragma omp parallel for schedule(static) reduction(+: b, z)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
@@ -128,17 +128,17 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
-	#pragma omp parallel for schedule(static) reduction(+: bt)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	#pragma omp parallel for schedule(static) reduction(+: bt, z)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	#pragma omp parallel for schedule(static) reduction(+: b, z)
+	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
