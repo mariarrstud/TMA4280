@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 	
 	double recvbuf1[m * counts[1]];
 	//MPI_Alltoallv
-	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_Double, &recvbuf1, 
+	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_DOUBLE, &recvbuf1, 
 		      counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 	//Unwrap data
 	size_t ind_recv1 = 0;
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	}
 	double recvbuf2[m * counts[1]];
 	//MPI_Alltoallv
-	MPI_Alltoallv(&sendbuf2, counts, displs, MPI_Double, &recvbuf2, 
+	MPI_Alltoallv(&sendbuf2, counts, displs, MPI_DOUBLE, &recvbuf2, 
 		      counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 	//Unwrap data
 	size_t ind_recv2 = 0;
