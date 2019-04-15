@@ -189,10 +189,12 @@ int main(int argc, char **argv)
 	}
 	printf("process%d: u_max %e, error %e\n", rank, u_max, error);
 	double global_u_max = 0.0;
+	double global_error = 0.0;
 	MPI_Reduce(&u_max, &global_u_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&error, &global_error, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	if (rank == 0) {
 		printf("u_max = %e\n", global_u_max);
-    		//printf("error = %e, h^2 = %e\n", error, h2);
+    		printf("error = %e, h^2 = %e\n", global_error, h2);
 	}
 	
 	MPI_Finalize();
