@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < m; j++) {
             u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
-            error = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j] - (sin(PI * grid[i + 1]) * sin(2 * PI * grid[j + 1])));
+            error = u_max > fabs(b[i][j]) ? error : fabs(b[i][j] - (sin(PI * grid[i + 1]) * sin(2 * PI * grid[j + 1])));
         }
     }
 
