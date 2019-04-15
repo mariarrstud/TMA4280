@@ -65,6 +65,11 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	printf("counts:\n");
+	print_vec(counts, size);
+	printf("displs:\n");
+	print_vec(displs, size);
+	
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
