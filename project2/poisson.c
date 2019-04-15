@@ -187,11 +187,11 @@ int main(int argc, char **argv)
 		error = u_max > fabs(b[i][j]) ? error : fabs(b[i][j] - (sin(PI * grid[i + 1]) * sin(2 * PI * grid[j + 1])));
 		}
 	}
-	printf("process%d: u_max %e, error %e", rank, u_max, error)
+	printf("process%d: u_max %e, error %e\n", rank, u_max, error);
 	double global_u_max = 0.0;
 	MPI_Reduce(&u_max, &global_u_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	if (rank == 0) {
-		printf("u_max = %e\n", u_max);
+		printf("u_max = %e\n", global_u_max);
     		//printf("error = %e, h^2 = %e\n", error, h2);
 	}
 	
