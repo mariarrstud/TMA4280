@@ -16,6 +16,7 @@ real **mk_2D_array(size_t n1, size_t n2, bool zero);
 void transpose(real **bt, real **b, size_t m);
 real rhs(real x, real y);
 void print_vec(double *vec, int len);
+void print_vec_int(int *vec, int len);
 void print_matrix(double **mat, int len);
 
 void fst_(real *v, int *n, real *w, int *nn);
@@ -52,23 +53,25 @@ int main(int argc, char **argv)
 	}
 	int rows_p = m / size;
 	int rem = m % size;
-	int counts[size] = { [0 ... size] = rows_p};
-	int displs[size] = { 0 };
+	int counts[size];
+	counts[size - 1] = row_p;
+	int displs[size];
 	for (size_t i = 1; i < size; i++) {
 		if (rem > 0) {
 			displs[i] = displs[i - 1] + rows_p + 1;
-			counts[i - 1] ++;
+			counts[i - 1] = row_p + 1;
 			rem --;
 		}
 		else {
-			displs[i] = displs[i - 1] + rows_p;	
+			displs[i] = displs[i - 1] + rows_p;
+			counts[i - 1] = row_p;
 		}
 	}
 	
 	printf("counts:\n");
-	print_vec(counts, size);
+	print_vec_int(counts, size);
 	printf("displs:\n");
-	print_vec(displs, size);
+	print_vec_int(displs, size);
 	
 	real time_start = MPI_Wtime();
 	
@@ -206,6 +209,14 @@ void print_vec(double *vec, int len)
 	printf("\n");
 }
 
+void print_vec_int(int *vec, int len)
+{
+	for (int i = 0; i < len; i++)
+	{
+		printf("%e ", vec[i]);
+	}
+	printf("\n");
+}
 
 void print_matrix(double **mat, int len)
 {
