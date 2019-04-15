@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 	}
 	
 	for (size_t i = 1; i < 2; i++) {
-		printf("%d\n", i);	
+		printf("%ld\n", i);	
 	}
 	
 	
