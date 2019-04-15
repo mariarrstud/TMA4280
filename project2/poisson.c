@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	print_matrix(b, m);
 	
 	//Pack data into sendbuffer
-	double sendbuf1[m * counts[0]];
+	double sendbuf1[m * counts[rank]];
 	size_t ind_send1 = 0;
 	for (size_t k = 0; k < size; k++) {
 		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
@@ -118,9 +118,9 @@ int main(int argc, char **argv)
 	}
 	
 	printf("Sendbuffer process %d :", rank);
-	print_vec(sendbuf1, m  * counts[0]);
+	print_vec(sendbuf1, m  * counts[rank]);
 	
-	double recvbuf1[m * counts[0]];
+	double recvbuf1[m * counts[rank]];
 	//MPI_Alltoallv
 	MPI_Alltoallv(&sendbuf1, counts, displs, MPI_DOUBLE, &recvbuf1, 
 		      counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 	}
 	
 	printf("Recvbuffer process %d :", rank);
-	print_vec(recvbuf1, m  * counts[0]);
+	print_vec(recvbuf1, m  * counts[rank]);
 	
 	printf("Matrix bt process %d :", rank);
 	print_matrix(bt, m);
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
 	}
 	
 	//Pack data into sendbuffer
-	double sendbuf2[m * counts[0]];
+	double sendbuf2[m * counts[rank]];
 	size_t ind_send2 = 0;
 	for (size_t k = 0; k < size; k++) {
 		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	double recvbuf2[m * counts[0]];
+	double recvbuf2[m * counts[rank]];
 	//MPI_Alltoallv
 	MPI_Alltoallv(&sendbuf2, counts, displs, MPI_DOUBLE, &recvbuf2, 
 		      counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
