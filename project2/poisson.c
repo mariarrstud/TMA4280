@@ -54,17 +54,17 @@ int main(int argc, char **argv)
 	int rows_p = m / size;
 	int rem = m % size;
 	int counts[size];
-	counts[size - 1] = row_p;
+	counts[size - 1] = rows_p;
 	int displs[size];
 	for (size_t i = 1; i < size; i++) {
 		if (rem > 0) {
 			displs[i] = displs[i - 1] + rows_p + 1;
-			counts[i - 1] = row_p + 1;
+			counts[i - 1] = rows_p + 1;
 			rem --;
 		}
 		else {
 			displs[i] = displs[i - 1] + rows_p;
-			counts[i - 1] = row_p;
+			counts[i - 1] = rows_p;
 		}
 	}
 	
@@ -213,7 +213,7 @@ void print_vec_int(int *vec, int len)
 {
 	for (int i = 0; i < len; i++)
 	{
-		printf("%e ", vec[i]);
+		printf("%d ", vec[i]);
 	}
 	printf("\n");
 }
