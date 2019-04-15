@@ -75,15 +75,6 @@ int main(int argc, char **argv)
 		mpi_displs[i] = displs[i] * counts[rank];
 	}
 	
-	printf("counts:\n");
-	print_vec_int(counts, size);
-	printf("displs:\n");
-	print_vec_int(displs, size);
-	printf("mpi_counts:\n");
-	print_vec_int(mpi_counts, size);
-	printf("mpi_displs:\n");
-	print_vec_int(mpi_displs, size);
-	
 	real time_start = MPI_Wtime();
 	
 	real *grid = mk_1D_array(n + 1, false);
@@ -112,9 +103,6 @@ int main(int argc, char **argv)
 		fst_(b[i], &n, z, &nn);
 	}
 	
-	printf("Matrix b process %d :", rank);
-	print_matrix(b, m);
-	
 	//Pack data into sendbuffer
 	double sendbuf1[m * counts[rank]];
 	size_t ind_send1 = 0;
@@ -126,9 +114,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
-	printf("Sendbuffer process %d :", rank);
-	print_vec(sendbuf1, m  * counts[rank]);
 	
 	double recvbuf1[m * counts[rank]];
 	//MPI_Alltoallv
@@ -144,12 +129,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
-	printf("Recvbuffer process %d :", rank);
-	print_vec(recvbuf1, m  * counts[rank]);
-	
-	printf("Matrix bt process %d :", rank);
-	print_matrix(bt, m);
 	
 	//#pragma omp parallel for schedule(static) reduction(+: bt, z)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
