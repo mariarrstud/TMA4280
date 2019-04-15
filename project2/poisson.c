@@ -97,7 +97,6 @@ int main(int argc, char **argv)
 			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
-	//#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(b[i], &n, z, &nn);
 	}
@@ -126,7 +125,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	//#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(bt[i], &n, z, &nn);
 	}
@@ -136,7 +134,6 @@ int main(int argc, char **argv)
 			bt[i][j] = bt[i][j] / (diag[i] + diag[j]);
 		}
 	}
-	//#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fst_(bt[i], &n, z, &nn);
 	}
@@ -165,7 +162,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	//#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		fstinv_(b[i], &n, z, &nn);
 	}
