@@ -161,7 +161,8 @@ int main(int argc, char **argv)
     }
 
     printf("u_max = %e\n", u_max);
-    printf("error = %e, h = %e\n", error, h);
+    double h2 = h * h;
+    printf("error = %e, h^2 = %e\n", error, h2);
     return 0;
 }
 
