@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	#pragma omp parallel for schedule(static)
 	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
 		for (size_t j = 0; j < m; j++) {
-			b[i][j] += h * h * rhs(grid[i+1], grid[j+1]);
+			b[i][j] = h * h * rhs(grid[i+1], grid[j+1]);
 		}
 	}
 	#pragma omp parallel for schedule(static)
