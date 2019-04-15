@@ -179,7 +179,9 @@ int main(int argc, char **argv)
 	real duration = time_start - MPI_Wtime();
 	
 	if (rank == 0) {
-		double u_max;
+		double u_max = 0.0;
+		double error = 0.0;
+		double h2 = h * h;
     		for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
         		for (size_t j = 0; j < m; j++) {
         		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
@@ -187,7 +189,6 @@ int main(int argc, char **argv)
         		}
     		}
 		printf("u_max = %e\n", u_max);
-		double h2 = h * h;
     		printf("error = %e, h^2 = %e\n", error, h2);
 	}
 	
