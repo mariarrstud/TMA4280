@@ -178,15 +178,13 @@ int main(int argc, char **argv)
 	
 	real duration = time_start - MPI_Wtime();
 	
-	double local_u_max = 0.0;
+	
 	double u_max;
     	for (size_t i = displs[rank]; i < displs[rank] + counts[rank]; i++) {
         	for (size_t j = 0; j < m; j++) {
-        		local_u_max = local_u_max > fabs(b[i][j]) ? local_u_max : fabs(b[i][j]);
+        		u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
         	}
     	}
-	printf("Process %d: u_max %e", rank, u_max);
-	MPI_Reduce(&local_u_max, &u_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	if (rank == 0) {
 		printf("u_max = %e\n", u_max);
 		//printf("T%e: %e\n", size, duration);
