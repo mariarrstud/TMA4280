@@ -5,6 +5,7 @@
 #include <omp.h>
 
 #define PI 3.14159265358979323846
+#define e 2.71828182845904523536
 #define true 1
 #define false 0
 
@@ -182,6 +183,7 @@ int main(int argc, char **argv)
 
 real rhs(real x, real y) {
 	//return 1;
+	//return (pow(e, x) * sin(2 * PI * x) * sin(2 * PI * y));
 	return (5 * PI * PI * sin(PI * x) * sin(2 * PI *y));
 }
 
