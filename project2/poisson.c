@@ -37,16 +37,9 @@ int main(int argc, char **argv)
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);	
-	if (size < 2) {
-		printf("The number of processes needs to be at least two\n");
-		MPI_Finalize();
-		return 3;
-	}
+	
 	real h = 1.0 / n;
 	int m = n - 1;
-	if (size > m) {
-		size = m;
-	}
 	int rows_p = m / size;
 	int rem = m % size;
 	int counts[size];
