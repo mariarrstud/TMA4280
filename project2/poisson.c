@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 	if (rank == 0) {
 		printf("u_max = %e\n", global_u_max);
     		printf("error = %e, h^2 = %e\n", global_error, h2);
-		printf("Processes: %d, Duration: %e", size, duration);
+		printf("Number of processes: %d, Duration: %e\n", size, duration);
 	}
 	
 	MPI_Finalize();
