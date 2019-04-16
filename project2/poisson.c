@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 		fstinv_(b[i], &n, z, &nn);
 	}
 	
-	real duration = time_start - MPI_Wtime();
+	real duration = MPI_Wtime() - time_start;
 	
 	double u_max = 0.0;
 	double error = 0.0;
